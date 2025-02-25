@@ -4,57 +4,183 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Просмотр документа</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.0/mammoth.browser.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.1.1/docx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/file-saver/2.0.5/FileSaver.min.js"></script>
   <style>
     body { font-family: Arial, sans-serif; background-color: #f9f9f9; margin: 0; }
     .container { max-width: 900px; margin: 20px auto; background: white; padding: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    #document-container { padding: 15px; word-wrap: break-word; }
+    #document-container { padding: 15px; word-wrap: break-word; white-space: pre-wrap; }
     .header { display: flex; justify-content: flex-end; padding: 10px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     .download-btn { padding: 8px 16px; border: 1px solid #ddd; cursor: pointer; }
   </style>
 </head>
 <body>
 <div class="header">
-  <button id="downloadBtn" class="download-btn">Скачать PDF</button>
+  <button id="downloadBtn" class="download-btn">Скачать DOCX</button>
 </div>
 <div class="container">
   <div id="document-container">Загрузка документа...</div>
 </div>
 <script>
-  const { jsPDF } = window.jspdf;
   const params = new URLSearchParams(window.location.search);
   const type = params.get('type');
-  const docxPath = type ? `assets/${type}.docx` : null;
+  const name = params.get('name');
+  let replacements = {};
 
-  async function loadDocument() {
-    if (!docxPath) {
-      document.getElementById('document-container').innerHTML = '<p>Не указан тип документа.</p>';
-      return;
-    }
+  if (name) {
     try {
-      const response = await fetch(docxPath);
-      if (!response.ok) throw new Error('Файл не найден');
-      const arrayBuffer = await response.arrayBuffer();
-      const result = await mammoth.convertToHtml({ arrayBuffer });
-      document.getElementById('document-container').innerHTML = result.value;
+      replacements = JSON.parse(decodeURIComponent(name));
     } catch (error) {
-      document.getElementById('document-container').innerHTML = `<p>Ошибка загрузки: ${error.message}</p>`;
+      console.error("Ошибка парсинга параметра name", error);
     }
   }
 
-  async function generateAndDownloadPDF() {
-    const pdf = new jsPDF();
-    const content = document.getElementById('document-container');
-    const canvas = await html2canvas(content);
-    const imgData = canvas.toDataURL('image/png');
-    pdf.addImage(imgData, 'PNG', 10, 10, 180, 0);
-    pdf.save(`${type || 'document'}.pdf`);
+  // Генерация номера договора
+  function generateContractNumber() {
+    return Math.floor(Math.random() * 9000) + 1000; // Генерирует номер от 1000 до 9999
   }
 
-  document.getElementById('downloadBtn').addEventListener('click', generateAndDownloadPDF);
-  document.addEventListener('DOMContentLoaded', loadDocument);
+  // Получение текущей даты
+  function getCurrentDate() {
+    const date = new Date();
+    return date.toLocaleDateString('ru-RU'); // Формат даты: DD.MM.YYYY
+  }
+
+  function generateDocumentText(type, replacements) {
+    const contractNumber = generateContractNumber();
+    const currentDate = getCurrentDate();
+    const city = "Москва";
+
+    switch (type) {
+      case 'OSAGO':
+        return `ДОГОВОР ОСАГО № ${contractNumber}
+
+г. ${city}                                                                                   "${currentDate}"
+
+<strong>Страхователь</strong>: ${replacements.user.firstName}, именуемый в дальнейшем "Страхователь", с одной стороны,
+и <strong>Страховая компания</strong> ООО:ТЕХНО, именуемая в дальнейшем "Страховая компания", с другой стороны,
+вместе именуемые "Стороны", заключили настоящий Договор о следующем:
+
+1. <strong>Предмет договора</strong>
+1.1. Страхователь обязуется уплатить страховую премию, а Страховая компания – выплатить страховое возмещение в случае наступления страхового случая в пределах, указанных в настоящем договоре.
+
+2. <strong>Информация о транспортном средстве</strong>
+2.1. Модель автомобиля: <strong>${replacements.brand} ${replacements.model}</strong>
+2.2. VIN: <strong>${replacements.vin}</strong>
+2.3. Госномер: <strong>${replacements.licensePlate}</strong>
+2.4. Период действия полиса: <strong>${replacements.period}</strong>
+
+3. <strong>Страхование</strong>
+3.1. Страхование осуществляется на период, указанный в пункте 2.4 настоящего договора.
+3.2. Количество водителей: <strong>${replacements.driverCount}</strong>.
+3.3. Стаж вождения: <strong>${replacements.drivingExperience}</strong> лет.
+3.4. Дата выдачи водительских прав: <strong>${replacements.licenseIssueDate}</strong>.
+3.5. Регион регистрации автомобиля: <strong>${replacements.region}</strong>.
+3.6. КБМ: <strong>${replacements.bonusMalus}</strong>.
+
+4. <strong>Права и обязанности сторон</strong>
+4.1. Страхователь обязуется предоставить все необходимые документы, включая, но не ограничиваясь, копиями паспортов, водительских прав и свидетельств о регистрации транспортного средства, для оформления страхового случая.
+4.2. Страховая компания обязуется в соответствии с условиями данного договора произвести выплату страхового возмещения в установленные сроки, при этом размер выплаты не может превышать сумму, установленную в настоящем договоре.
+4.3. В случае изменения обстоятельств, влияющих на выполнение условий настоящего договора, Стороны обязаны незамедлительно уведомить друг друга и внести соответствующие изменения в настоящий договор.
+4.4. Страхователь имеет право на получение информации о ходе рассмотрения своего страхового случая и о принятии решений Страховой компании по данному делу.
+
+5. <strong>Заключительные положения</strong>
+5.1. Настоящий договор вступает в силу с момента его подписания обеими сторонами.
+5.2. Договор составлен в двух экземплярах, имеющих одинаковую юридическую силу.
+5.3. Все изменения и дополнения к настоящему договору должны быть оформлены в письменной форме и подписаны обеими сторонами.
+
+<strong>Страхователь</strong>: _______________                    <strong>Страховая компания</strong>: _______________`;
+      case 'CASCO':
+        return `ДОГОВОР КАСКО № ${contractNumber}
+
+г. ${city}                                                                                   "${currentDate}"
+
+<strong>Страхователь</strong>: ${replacements.user.firstName}, именуемый в дальнейшем "Страхователь", с одной стороны,
+и <strong>Страховая компания</strong> ООО:ТЕХНО, именуемая в дальнейшем "Страховая компания", с другой стороны,
+вместе именуемые "Стороны", заключили настоящий Договор о следующем:
+
+1. <strong>Предмет договора</strong>
+1.1. Страхователь обязуется уплатить страховую премию, а Страховая компания – выплатить страховое возмещение в случае наступления страхового случая в пределах, указанных в настоящем договоре.
+
+2. <strong>Информация о транспортном средстве</strong>
+2.1. Модель автомобиля: <strong>${replacements.brand} ${replacements.model}</strong>
+2.2. VIN: <strong>${replacements.vin}</strong>
+2.3. Госномер: <strong>${replacements.licensePlate}</strong>
+2.4. Период действия полиса: <strong>${replacements.period}</strong>
+2.5. Страховое покрытие: <strong>${replacements.coverage}</strong>
+2.6. Франшиза: <strong>${replacements.franchise}</strong>
+2.7. Тип ремонта: <strong>${replacements.repairType}</strong>
+2.8. Противоугонная система: <strong>${replacements.antiTheft}</strong>
+2.9. Способ оплаты: <strong>${replacements.paymentType}</strong>.
+
+3. <strong>Права и обязанности сторон</strong>
+3.1. Страхователь обязуется предоставить все необходимые документы для оформления страхового случая, включая отчет о происшествии и другие документы, запрашиваемые Страховой компанией.
+3.2. Страховая компания обязуется произвести выплату страхового возмещения в соответствии с условиями настоящего договора, при этом максимальная сумма возмещения не может превышать размер, указанный в договоре.
+3.3. Страхователь имеет право на получение информации о ходе рассмотрения его заявки на выплату страхового возмещения.
+3.4. В случае выявления несоответствий в предоставленных документах, Страховая компания вправе запросить дополнительные сведения и документы.
+
+4. <strong>Заключительные положения</strong>
+4.1. Настоящий договор вступает в силу с момента его подписания обеими сторонами.
+4.2. Договор составлен в двух экземплярах, имеющих одинаковую юридическую силу.
+4.3. Все изменения и дополнения к настоящему договору должны быть оформлены в письменной форме и подписаны обеими сторонами.
+
+<strong>Страхователь</strong>: _______________                    <strong>Страховая компания</strong>: _______________`;
+      case 'TEX_INSPECTION':
+        return `ДОГОВОР ТЕХОСМОТРА № ${contractNumber}
+
+г. ${city}                                                                                   "${currentDate}"
+
+<strong>Страхователь</strong>: ${replacements.user.firstName}, именуемый в дальнейшем "Страхователь", с одной стороны,
+и <strong>Организация, проводящая техосмотр</strong> ООО:ТЕХНО, именуемая в дальнейшем "Исполнитель", с другой стороны,
+вместе именуемые "Стороны", заключили настоящий Договор о следующем:
+
+1. <strong>Предмет договора</strong>
+1.1. Исполнитель обязуется провести техосмотр транспортного средства, а Страхователь – оплатить услуги Исполнителя в соответствии с условиями, установленными настоящим договором.
+
+2. <strong>Информация о транспортном средстве</strong>
+2.1. Модель автомобиля: <strong>${replacements.brand} ${replacements.model}</strong>
+2.2. VIN: <strong>${replacements.vin}</strong>
+2.3. Госномер: <strong>${replacements.licensePlate}</strong>
+2.4. Период действия осмотра: <strong>${replacements.period}</strong>
+2.5. Пробег: <strong>${replacements.mileage}</strong>
+2.6. Тип двигателя: <strong>${replacements.engineType}</strong>
+2.7. Техническое состояние: <strong>${replacements.technicalCondition}</strong>
+2.8. Дата последнего осмотра: <strong>${replacements.lastInspection}</strong>
+2.9. Тип осмотра: <strong>${replacements.inspectionType}</strong>.
+
+3. <strong>Права и обязанности сторон</strong>
+3.1. Исполнитель обязуется предоставить результаты техосмотра в установленный срок и оформить все необходимые документы для регистрации результата техосмотра.
+3.2. Страхователь обязуется предоставить Исполнителю все необходимые документы для проведения техосмотра, включая свидетельства о регистрации транспортного средства и иные документы, по запросу Исполнителя.
+3.3. Исполнитель имеет право запрашивать дополнительные сведения и документы у Страхователя в случае необходимости для выполнения своих обязательств по настоящему договору.
+3.4. В случае несоответствия состояния транспортного средства требованиям, установленным законодательством Российской Федерации, Исполнитель обязан уведомить об этом Страхователя и оформить соответствующий акт.
+
+4. <strong>Заключительные положения</strong>
+4.1. Настоящий договор вступает в силу с момента его подписания обеими сторонами.
+4.2. Договор составлен в двух экземплярах, имеющих одинаковую юридическую силу.
+4.3. Все изменения и дополнения к настоящему договору должны быть оформлены в письменной форме и подписаны обеими сторонами.
+
+<strong>Страхователь</strong>: _______________                    <strong>Исполнитель</strong>: _______________`;
+      default:
+        return 'Неизвестный тип документа.';
+    }
+  }
+
+  async function loadAndModifyDocx() {
+    const documentText = generateDocumentText(type, replacements);
+    document.getElementById('document-container').innerHTML = documentText;
+
+    // Здесь добавьте логику для создания и скачивания DOCX, если это необходимо.
+  }
+
+  document.getElementById('downloadBtn').addEventListener('click', async () => {
+    const modifiedDoc = await loadAndModifyDocx();
+    if (modifiedDoc) {
+      // Здесь будет логика для создания DOCX и скачивания
+    }
+  });
+
+  document.addEventListener('DOMContentLoaded', loadAndModifyDocx);
 </script>
 </body>
 </html>
