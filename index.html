@@ -3,376 +3,58 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Просмотр ОСАГО документа</title>
+  <title>Просмотр документа</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.0/mammoth.browser.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f9f9f9;
-      padding: 0;
-      margin: 0;
-    }
-
-    .header {
-      position: sticky;
-      top: 0;
-      width: 100%;
-      background-color: #fff;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-      z-index: 100;
-      padding: 8px 12px;
-      display: flex;
-      justify-content: flex-end;
-    }
-
-    .download-btn {
-      background-color: #f8f9fa;
-      color: #333;
-      padding: 8px 16px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s ease;
-      font-weight: 500;
-    }
-
-    .download-btn:hover {
-      background-color: #e9ecef;
-      border-color: #ced4da;
-    }
-
-    .download-btn:active {
-      background-color: #dee2e6;
-    }
-
-    .download-btn svg {
-      margin-right: 6px;
-      height: 16px;
-      width: 16px;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 10px;
-      background-color: white;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-      min-height: calc(100vh - 60px);
-    }
-
-    #document-container {
-      background-color: white;
-      padding: 15px;
-      overflow-wrap: break-word;
-      word-wrap: break-word;
-    }
-
-    #loader {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(255, 255, 255, 0.9);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-
-    .spinner {
-      border: 4px solid rgba(0, 0, 0, 0.1);
-      border-top: 4px solid #3498db;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    /* Стили для содержимого документа */
-    #document-container h1 {
-      font-size: 24px;
-      margin-top: 24px;
-      margin-bottom: 16px;
-    }
-
-    #document-container h2 {
-      font-size: 20px;
-      margin-top: 20px;
-      margin-bottom: 12px;
-    }
-
-    #document-container p {
-      margin-bottom: 12px;
-      line-height: 1.5;
-    }
-
-    #document-container table {
-      border-collapse: collapse;
-      width: 100%;
-      margin-bottom: 16px;
-      max-width: 100%;
-      overflow-x: auto;
-      display: block;
-    }
-
-    #document-container th, #document-container td {
-      border: 1px solid #ddd;
-      padding: 8px;
-    }
-
-    #document-container th {
-      background-color: #f2f2f2;
-      text-align: left;
-    }
-
-    /* Элемент для всплывающего уведомления */
-    .toast {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background-color: #333;
-      color: white;
-      padding: 12px 24px;
-      border-radius: 4px;
-      font-size: 14px;
-      z-index: 1000;
-      display: none;
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-
-    /* Адаптивные стили для мобильных устройств */
-    @media screen and (max-width: 600px) {
-      .container {
-        padding: 5px;
-      }
-
-      #document-container {
-        padding: 10px;
-      }
-
-      #document-container h1 {
-        font-size: 20px;
-      }
-
-      #document-container h2 {
-        font-size: 18px;
-      }
-
-      #document-container p {
-        font-size: 14px;
-      }
-
-      #document-container th, #document-container td {
-        padding: 5px;
-        font-size: 13px;
-      }
-
-      .download-btn {
-        padding: 6px 12px;
-        font-size: 13px;
-      }
-    }
+    body { font-family: Arial, sans-serif; background-color: #f9f9f9; margin: 0; }
+    .container { max-width: 900px; margin: 20px auto; background: white; padding: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    #document-container { padding: 15px; word-wrap: break-word; }
+    .header { display: flex; justify-content: flex-end; padding: 10px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .download-btn { padding: 8px 16px; border: 1px solid #ddd; cursor: pointer; }
   </style>
 </head>
 <body>
-<div id="loader">
-  <div class="spinner"></div>
-</div>
-
 <div class="header">
-  <button id="downloadBtn" class="download-btn">
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-      <polyline points="7 10 12 15 17 10"></polyline>
-      <line x1="12" y1="15" x2="12" y2="3"></line>
-    </svg>
-    PDF
-  </button>
+  <button id="downloadBtn" class="download-btn">Скачать PDF</button>
 </div>
-
 <div class="container">
-  <div id="document-container"></div>
+  <div id="document-container">Загрузка документа...</div>
 </div>
-
-<div id="toast" class="toast">PDF создается...</div>
-
 <script>
-  // Инициализация jsPDF
   const { jsPDF } = window.jspdf;
-
-  // Путь к документу
-  const docxPath = 'assets/osago.docx';
-  let docxContent = null;
-
-  // Выполняем загрузку и отображение документа при загрузке страницы
-  document.addEventListener('DOMContentLoaded', loadDocument);
-  document.getElementById('downloadBtn').addEventListener('click', generateAndDownloadPDF);
+  const params = new URLSearchParams(window.location.search);
+  const type = params.get('type');
+  const docxPath = type ? `assets/${type}.docx` : null;
 
   async function loadDocument() {
-    const loader = document.getElementById('loader');
-    const documentContainer = document.getElementById('document-container');
-
-    try {
-      // Загрузка DOCX файла
-      const response = await fetch(docxPath);
-      if (!response.ok) {
-        throw new Error('Не удалось загрузить файл DOCX');
-      }
-
-      const arrayBuffer = await response.arrayBuffer();
-
-      // Конвертация DOCX в HTML с помощью mammoth
-      const result = await mammoth.convertToHtml({
-        arrayBuffer,
-        styleMap: [
-          "p[style-name='Heading 1'] => h1:fresh",
-          "p[style-name='Heading 2'] => h2:fresh",
-          "p[style-name='Title'] => h1.title:fresh",
-          "table => table",
-          "tr => tr",
-          "td => td"
-        ]
-      });
-
-      docxContent = result.value;
-
-      // Отображаем полученный HTML в контейнере
-      documentContainer.innerHTML = docxContent;
-
-      // Обработка изображений, если они есть в документе
-      const images = documentContainer.getElementsByTagName('img');
-      for (let i = 0; i < images.length; i++) {
-        images[i].style.maxWidth = '100%';
-      }
-
-      // Делаем таблицы адаптивными
-      makeTablesResponsive();
-
-    } catch (error) {
-      console.error('Ошибка при загрузке документа:', error);
-      documentContainer.innerHTML = `
-                    <div style="text-align: center; color: #d9534f; padding: 20px;">
-                        <h2>Ошибка при загрузке документа</h2>
-                        <p>${error.message}</p>
-                    </div>
-                `;
-    } finally {
-      // Скрываем loader
-      loader.style.display = 'none';
+    if (!docxPath) {
+      document.getElementById('document-container').innerHTML = '<p>Не указан тип документа.</p>';
+      return;
     }
-  }
-
-  function makeTablesResponsive() {
-    const tables = document.querySelectorAll('#document-container table');
-    tables.forEach(table => {
-      // Добавляем обертку с горизонтальной прокруткой для таблиц, если необходимо
-      const wrapper = document.createElement('div');
-      wrapper.style.overflowX = 'auto';
-      wrapper.style.width = '100%';
-      table.parentNode.insertBefore(wrapper, table);
-      wrapper.appendChild(table);
-    });
-  }
-
-  function showToast(message, duration = 3000) {
-    const toast = document.getElementById('toast');
-    toast.textContent = message;
-    toast.style.display = 'block';
-
-    // Небольшая задержка перед показом для правильной анимации
-    setTimeout(() => {
-      toast.style.opacity = '1';
-    }, 10);
-
-    // Скрываем через указанное время
-    setTimeout(() => {
-      toast.style.opacity = '0';
-      setTimeout(() => {
-        toast.style.display = 'none';
-      }, 300);
-    }, duration);
+    try {
+      const response = await fetch(docxPath);
+      if (!response.ok) throw new Error('Файл не найден');
+      const arrayBuffer = await response.arrayBuffer();
+      const result = await mammoth.convertToHtml({ arrayBuffer });
+      document.getElementById('document-container').innerHTML = result.value;
+    } catch (error) {
+      document.getElementById('document-container').innerHTML = `<p>Ошибка загрузки: ${error.message}</p>`;
+    }
   }
 
   async function generateAndDownloadPDF() {
-    // Показываем индикатор загрузки и уведомление
-    const loader = document.getElementById('loader');
-    loader.style.display = 'flex';
-    showToast('PDF создается...');
-
-    try {
-      const documentContainer = document.getElementById('document-container');
-
-      // Создаем PDF документ формата A4
-      const pdf = new jsPDF('p', 'pt', 'a4');
-
-      // Добавляем шрифт для поддержки кириллицы
-      pdf.addFont('https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Regular.ttf', 'Roboto', 'normal');
-      pdf.setFont('Roboto');
-
-      // Создаем canvas из HTML
-      const canvas = await html2canvas(documentContainer, {
-        scale: 1.5, // Увеличиваем масштаб для лучшего качества
-        useCORS: true,
-        logging: false
-      });
-
-      // Добавляем canvas в PDF
-      const imgData = canvas.toDataURL('image/jpeg', 1.0);
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-      // Если высота контента больше, чем высота страницы, разбиваем на несколько страниц
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      let remainingHeight = pdfHeight;
-      let position = 0;
-
-      // Добавляем первую страницу
-      pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, pdfHeight);
-      remainingHeight -= pageHeight;
-
-      // Добавляем дополнительные страницы, если нужно
-      while (remainingHeight > 0) {
-        position -= pageHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, pdfHeight);
-        remainingHeight -= pageHeight;
-      }
-
-      // Скачиваем PDF файл
-      pdf.save('osago.pdf');
-
-      // Показываем уведомление об успешном скачивании
-      showToast('PDF успешно скачан', 2000);
-
-    } catch (error) {
-      console.error('Ошибка при генерации PDF:', error);
-      showToast('Ошибка при создании PDF', 3000);
-    } finally {
-      // Скрываем индикатор загрузки
-      loader.style.display = 'none';
-    }
+    const pdf = new jsPDF();
+    const content = document.getElementById('document-container');
+    const canvas = await html2canvas(content);
+    const imgData = canvas.toDataURL('image/png');
+    pdf.addImage(imgData, 'PNG', 10, 10, 180, 0);
+    pdf.save(`${type || 'document'}.pdf`);
   }
+
+  document.getElementById('downloadBtn').addEventListener('click', generateAndDownloadPDF);
+  document.addEventListener('DOMContentLoaded', loadDocument);
 </script>
 </body>
 </html>
