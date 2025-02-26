@@ -7,17 +7,19 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.1.1/docx.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/file-saver/2.0.5/FileSaver.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     body { font-family: Arial, sans-serif; background-color: #f9f9f9; margin: 0; }
     .container { max-width: 900px; margin: 20px auto; background: white; padding: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     #document-container { padding: 15px; word-wrap: break-word; white-space: pre-wrap; }
     .header { display: flex; justify-content: flex-end; padding: 10px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .download-btn { padding: 8px 16px; border: 1px solid #ddd; cursor: pointer; }
+    .download-btn { padding: 8px 16px; border: 1px solid #ddd; cursor: pointer; margin-left: 10px; }
   </style>
 </head>
 <body>
 <div class="header">
-  <button id="downloadBtn" class="download-btn">Скачать DOCX</button>
+  <button id="downloadDocxBtn" class="download-btn">Скачать DOCX</button>
+  <button id="downloadPdfBtn" class="download-btn">Скачать PDF</button>
 </div>
 <div class="container">
   <div id="document-container">Загрузка документа...</div>
@@ -36,15 +38,13 @@
     }
   }
 
-  // Генерация номера договора
   function generateContractNumber() {
-    return Math.floor(Math.random() * 9000) + 1000; // Генерирует номер от 1000 до 9999
+    return Math.floor(Math.random() * 9000) + 1000;
   }
 
-  // Получение текущей даты
   function getCurrentDate() {
     const date = new Date();
-    return date.toLocaleDateString('ru-RU'); // Формат даты: DD.MM.YYYY
+    return date.toLocaleDateString('ru-RU');
   }
 
   function generateDocumentText(type, replacements) {
@@ -82,14 +82,14 @@
 4. <strong>Права и обязанности сторон</strong>
 4.1. Страхователь обязуется предоставить все необходимые документы, включая, но не ограничиваясь, копиями паспортов, водительских прав и свидетельств о регистрации транспортного средства, для оформления страхового случая.
 4.2. Страховая компания обязуется в соответствии с условиями данного договора произвести выплату страхового возмещения в установленные сроки, при этом размер выплаты не может превышать сумму, установленную в настоящем договоре.
-4.3. В случае изменения обстоятельств, влияющих на выполнение условий настоящего договора, Стороны обязаны незамедлительно уведомить друг друга и внести соответствующие изменения в настоящий договор.
+4.3. В случае изменения обстоятельств, влияющих на выполнение условий настоящего договора, Стороны обязаны незамедлительно уведомить друг друга и внести соответствующи�� изменения в настоящий договор.
 4.4. Страхователь имеет право на получение информации о ходе рассмотрения своего страхового случая и о принятии решений Страховой компании по данному делу.
 
 5. <strong>Заключительные положения</strong>
 5.1. Настоящий договор вступает в силу с момента его подписания обеими сторонами.
 5.2. Договор составлен в двух экземплярах, имеющих одинаковую юридическую силу.
 5.3. Все изменения и дополнения к настоящему договору должны быть оформлены в письменной форме и подписаны обеими сторонами.
-<strong>Итоговая стоимость</strong>: <strong>${totalAmount} руб.</strong>
+<strong>Итоговая стоимость</strong>: <strong>${replacements.totalAmount} руб.</strong>
 
 <strong>Страхователь</strong>: _______________                    <strong>Страховая компания</strong>: _______________`;
       case 'CASCO':
@@ -109,14 +109,14 @@
 2.2. VIN: <strong>${replacements.vin}</strong>
 2.3. Госномер: <strong>${replacements.licensePlate}</strong>
 2.4. Период действия полиса: <strong>${replacements.period || 'год'}</strong>
-2.5. Страховое покрытие: <strong>${replacements.coverage}</strong>
+2.5. Страхо��ое покрытие: <strong>${replacements.coverage}</strong>
 2.6. Франшиза: <strong>${replacements.franchise}</strong>
 2.7. Тип ремонта: <strong>${replacements.repairType}</strong>
 2.8. Противоугонная система: <strong>${replacements.antiTheft}</strong>
 2.9. Способ оплаты: <strong>${replacements.paymentType}</strong>.
 
 3. <strong>Права и обязанности сторон</strong>
-3.1. Страхователь обязуется предоставить все необходимые документы для оформления страхового случая, включая отчет о происшествии и другие документы, запрашиваемые Страховой компанией.
+3.1. Страхователь обязуется предоставить все необходимые документы для оформления страхового случая, включая отчет о происшествии и другие документы, запрашиваемые Страх��вой компанией.
 3.2. Страховая компания обязуется произвести выплату страхового возмещения в соответствии с условиями настоящего договора, при этом максимальная сумма возмещения не может превышать размер, указанный в договоре.
 3.3. Страхователь имеет право на получение информации о ходе рассмотрения его заявки на выплату страхового возмещения.
 3.4. В случае выявления несоответствий в предоставленных документах, Страховая компания вправе запросить дополнительные сведения и документы.
@@ -125,9 +125,9 @@
 4.1. Настоящий договор вступает в силу с момента его подписания обеими сторонами.
 4.2. Договор составлен в двух экземплярах, имеющих одинаковую юридическую силу.
 4.3. Все изменения и дополнения к настоящему договору должны быть оформлены в письменной форме и подписаны обеими сторонами.
-<strong>Итоговая стоимость</strong>: <strong>${totalAmount} руб.</strong>
+<strong>Итоговая стоимость</strong>: <strong>${replacements.totalAmount} руб.</strong>
 
-<strong>Страхователь</strong>: _______________                    <strong>Страховая компания</strong>: _______________`;
+<strong>Страхователь</strong>: _______________                    <strong>Страхова�� компания</strong>: _______________`;
       case 'TEX_INSPECTION':
         return `ДОГОВОР ТЕХОСМОТРА № ${contractNumber}
 
@@ -135,10 +135,10 @@
 
 <strong>Страхователь</strong>: ${replacements.user.firstName}, именуемый в дальнейшем "Страхователь", с одной стороны,
 и <strong>Организация, проводящая техосмотр</strong> ООО:ТЕХНО, именуемая в дальнейшем "Исполнитель", с другой стороны,
-вместе именуемые "Стороны", заключили настоящий Договор о следующем:
+вместе именуемые "Стороны", заключили насто��щий Договор о следующем:
 
 1. <strong>Предмет договора</strong>
-1.1. Исполнитель обязуется провести техосмотр транспортного средства, а Страхователь – оплатить услуги Исполнителя в соответствии с условиями, установленными настоящим договором.
+1.1. Исполнитель обязуется провести техосмотр транспортного средства, а Страхователь – оплатить услуги Исполнителя в соответствии с условиями, установленными настоящ��м договором.
 
 2. <strong>Информация о транспортном средстве</strong>
 2.1. Модель автомобиля: <strong>${replacements.brand} ${replacements.model}</strong>
@@ -151,7 +151,7 @@
 2.8. Дата последнего осмотра: <strong>${replacements.lastInspection}</strong>
 2.9. Тип осмотра: <strong>${replacements.inspectionType}</strong>.
 
-3. <strong>Права и обязанности сторон</strong>
+3. <strong>Права �� обязанности сторон</strong>
 3.1. Исполнитель обязуется предоставить результаты техосмотра в установленный срок и оформить все необходимые документы для регистрации результата техосмотра.
 3.2. Страхователь обязуется предоставить Исполнителю все необходимые документы для проведения техосмотра, включая свидетельства о регистрации транспортного средства и иные документы, по запросу Исполнителя.
 3.3. Исполнитель имеет право запрашивать дополнительные сведения и документы у Страхователя в случае необходимости для выполнения своих обязательств по настоящему договору.
@@ -161,7 +161,7 @@
 4.1. Настоящий договор вступает в силу с момента его подписания обеими сторонами.
 4.2. Договор составлен в двух экземплярах, имеющих одинаковую юридическую силу.
 4.3. Все изменения и дополнения к настоящему договору должны быть оформлены в письменной форме и подписаны обеими сторонами.
-<strong>Итоговая стоимость</strong>: <strong>${totalAmount} руб.</strong>
+<strong>Итоговая стоимость</strong>: <strong>${replacements.totalAmount} руб.</strong>
 
 <strong>Страхователь</strong>: _______________                    <strong>Исполнитель</strong>: _______________`;
       default:
@@ -176,12 +176,22 @@
     // Здесь добавьте логику для создания и скачивания DOCX, если это необходимо.
   }
 
-  document.getElementById('downloadBtn').addEventListener('click', async () => {
+  async function downloadPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const documentText = document.getElementById('document-container').innerText;
+    doc.text(documentText, 10, 10);
+    doc.save('document.pdf');
+  }
+
+  document.getElementById('downloadDocxBtn').addEventListener('click', async () => {
     const modifiedDoc = await loadAndModifyDocx();
     if (modifiedDoc) {
       // Здесь будет логика для создания DOCX и скачивания
     }
   });
+
+  document.getElementById('downloadPdfBtn').addEventListener('click', downloadPDF);
 
   document.addEventListener('DOMContentLoaded', loadAndModifyDocx);
 </script>
